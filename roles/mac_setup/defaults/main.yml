@@ -80,6 +80,27 @@ vscode_extensions:
   - ms-python.python
   - redhat.ansible
   - Catppuccin.catppuccin-vsc
+  - formulahendry.auto-close-tag
+  - njpwerner.autodocstring
+  - boto3typed.boto3-ide
+  - ms-vscode.azure-account
+  - aaron-bond.better-comments
+  - ms-python.black-formatter
+  - batisteo.vscode-django
+  - ms-vscode-remote.remote-containers
+  - ms-vscode.vscode-typescript-tslint-plugin
+  - GitHub.vscode-github-actions
+  - golang.go
+  - HashiCorp.hcl
+  - oderwat.indent-rainbow
+  - VisualStudioExptTeam.vscodeintellicode
+  - ms-python.isort
+  - ritwickdey.LiveServer
+  - PKief.material-icon-theme
+  - matangover.mypy
+  - esbenp.prettier-vscode
+  - rust-lang.rust-analyzer
+  - vscodevim.vim
 
 
 git_config:
