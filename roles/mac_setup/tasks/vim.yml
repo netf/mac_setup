@@ -1,0 +1,87 @@
+- name: Set up LazyVim
+  block:
+    - name: Ensure Neovim is installed
+      homebrew:
+        name: neovim
+        state: present
+
+    - name: Backup existing Neovim configuration
+      command: mv ~/.config/nvim ~/.config/nvim.bak
+      args:
+        creates: ~/.config/nvim.bak
+      ignore_errors: true
+
+    - name: Backup existing Neovim state
+      command: mv ~/.local/state/nvim ~/.local/state/nvim.bak
+      args:
+        creates: ~/.local/state/nvim.bak
+      ignore_errors: true
+
+    - name: Backup existing Neovim cache
+      command: mv ~/.cache/nvim ~/.cache/nvim.bak
+      args:
+        creates: ~/.cache/nvim.bak
+      ignore_errors: true
+
+    - name: Clone LazyVim repository
+      git:
+        repo: https://github.com/LazyVim/starter
+        dest: ~/.config/nvim
+        version: main
+
+    - name: Remove .git directory from LazyVim config
+      file:
+        path: ~/.config/nvim/.git
+        state: absent
+
+    - name: Install Nerd Fonts
+      homebrew:
+        name:
+          - font-hack-nerd-font
+          - font-fira-code-nerd-font
+        state: present
+
+    - name: Add Neovim alias to .zshrc
+      lineinfile:
+        path: ~/.zshrc
+        line: 'alias vim="nvim"'
+        create: yes
+
+    - name: Add LazyVim configuration
+      copy:
+        dest: ~/.config/nvim/lua/config/options.lua
+        content: |
+          -- Add your own customizations here
+          vim.opt.relativenumber = true
+          vim.opt.wrap = false
+          -- Add more options as needed
+
+    - name: Add custom LazyVim plugins
+      copy:
+        dest: ~/.config/nvim/lua/plugins/user.lua
+        content: |
+          return {
+            -- Add your custom plugins here
+            { "tpope/vim-surround" },
+            { "github/copilot.vim" },
+            -- Add more plugins as needed
+          }
+
+    - name: Configure LazyVim colorschemes
+      copy:
+        dest: ~/.config/nvim/lua/plugins/colorscheme.lua
+        content: |
+          return {
+            -- add gruvbox
+            { "ellisonleao/gruvbox.nvim" },
+            { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
+            { "romgrk/github-light.vim" },
+
+            -- Configure LazyVim to load catppuccin-frappe
+            {
+              "LazyVim/LazyVim",
+              opts = {
+                colorscheme = "catppuccin-frappe",
+              },
+            },
+          }
