@@ -40,6 +40,9 @@ homebrew_packages:
   - lazygit
   - tldr
   - git-delta
+  - httpie
+  - neovim
+  - fd
 
 homebrew_cask_apps:
   - raycast
