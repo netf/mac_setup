@@ -1,0 +1,6 @@
+---
+- name: Setup Mac for DevOps Engineer
+  hosts: localhost
+  connection: local
+  roles:
+    - mac_setup

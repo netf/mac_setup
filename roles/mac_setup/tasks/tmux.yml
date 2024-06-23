@@ -1,0 +1,66 @@
+- name: Configure tmux
+  block:
+    - name: Ensure tmux is installed
+      homebrew:
+        name: tmux
+        state: present
+
+    - name: Create tmux configuration directory
+      file:
+        path: "{{ ansible_env.HOME }}/.tmux"
+        state: directory
+        mode: '0755'
+
+    - name: Copy tmux configuration file
+      copy:
+        content: |
+          # List of plugins
+          set -g @plugin 'tmux-plugins/tpm'
+          set -g @plugin 'tmux-plugins/tmux-sensible'
+          set -g @plugin 'christoomey/vim-tmux-navigator'
+          set -g @plugin 'tmux-plugins/tmux-resurrect'
+          set -g @plugin 'tmux-plugins/tmux-continuum'
+          set -g @plugin 'catppuccin/tmux'
+
+          # theme
+          set -g @catppuccin_flavour 'frappe' # or frappe, macchiato, mocha
+
+          # Shift Alt vim keys to switch windows
+          bind -n M-H  previous-window
+          bind -n M-L next-window
+
+          # Fix terminal colors
+          set-option -sa terminal-overrides ",xterm*:Tc"
+
+          # Set prefix to Ctrl+Space
+          unbind C-b
+          set -g prefix C-Space
+          bind C-Space send-prefix
+
+          # Set mouse mode on
+          set -g mouse on
+
+          # Set windows and panes index to 1
+          set -g base-index 1
+          set -g pane-base-index 1
+          set-window-option -g pane-base-index 1
+          set-option -g renumber-windows on
+
+          # Set history limit
+          set -g history-limit 100000
+
+          # Initialize TMUX plugin manager (keep this line at the very bottom of tmux.conf)
+          run '~/.tmux/plugins/tpm/tpm'
+        dest: "{{ ansible_env.HOME }}/.tmux.conf"
+        mode: '0644'
+
+    - name: Clone TPM (Tmux Plugin Manager)
+      git:
+        repo: 'https://github.com/tmux-plugins/tpm'
+        dest: "{{ ansible_env.HOME }}/.tmux/plugins/tpm"
+        version: master
+        depth: 1
+
+    - name: Install tmux plugins
+      command: "{{ ansible_env.HOME }}/.tmux/plugins/tpm/bin/install_plugins"
+      changed_when: false

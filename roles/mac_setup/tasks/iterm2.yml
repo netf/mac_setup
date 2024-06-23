@@ -1,0 +1,74 @@
+- name: Install and configure iTerm2
+  block:
+    - name: Install iTerm2
+      homebrew_cask:
+        name: iterm2
+        state: present
+
+    - name: Install iTerm2 Python module
+      pip:
+        name: iterm2
+        state: present
+
+    - name: Ensure iTerm2 configuration directory exists
+      file:
+        path: "{{ ansible_env.HOME }}/Library/Application Support/iTerm2/DynamicProfiles"
+        state: directory
+        mode: '0755'
+
+    - name: Ensure iTerm2 AutoLaunch directory exists
+      file:
+        path: "{{ ansible_env.HOME }}/Library/Application Support/iTerm2/Scripts/AutoLaunch"
+        state: directory
+        mode: '0755'
+
+    - name: Copy Catppuccin Frappé iTerm2 profile
+      copy:
+        src: "{{ playbook_dir }}/roles/mac_setup/files/iterm2_profile.json"
+        dest: "{{ ansible_env.HOME }}/Library/Application Support/iTerm2/DynamicProfiles/catppuccin_frappe.json"
+        mode: '0644'
+
+    - name: Create AutoLaunch script to change default profile
+      copy:
+        content: |
+          #!/usr/bin/env python3
+
+          import iterm2
+
+          async def main(connection):
+              all_profiles = await iterm2.PartialProfile.async_query(connection)
+              for profile in all_profiles:
+                  if profile.name == "Catppuccin Frappé":
+                      await profile.async_make_default()
+                      return
+
+          iterm2.run_until_complete(main)
+        dest: "{{ ansible_env.HOME }}/Library/Application Support/iTerm2/Scripts/AutoLaunch/set_default_profile.py"
+        mode: '0755'
+
+    - name: Enable iTerm2 Python API
+      osx_defaults:
+        domain: com.googlecode.iterm2
+        key: "EnableAPIServer"
+        type: int
+        value: 1
+
+    - name: Enable shell integration for Zsh
+      lineinfile:
+        path: "{{ ansible_env.HOME }}/.zshrc"
+        line: "source ~/.iterm2_shell_integration.zsh"
+        create: yes
+
+    - name: Copy custom iTerm2 preferences file
+      copy:
+        src: "{{ playbook_dir }}/roles/mac_setup/files/com.googlecode.iterm2.plist"
+        dest: "{{ ansible_env.HOME }}/Library/Application Support/iTerm2/com.googlecode.iterm2.plist"
+        mode: '0600'
+
+    - name: Download iTerm2 shell integration script
+      get_url:
+        url: https://iterm2.com/shell_integration/zsh
+        dest: "{{ ansible_env.HOME }}/.iterm2_shell_integration.zsh"
+        mode: '0644'
+
+  become: false

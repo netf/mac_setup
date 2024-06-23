@@ -1,0 +1,90 @@
+---
+homebrew_packages:
+  - wget
+  - exa
+  - bat
+  - htop
+  - btop
+  - prettyping
+  - gping
+  - dust
+  - dog
+  - xh
+  - curlie
+  - coreutils
+  - gpg
+  - direnv
+  - gawk
+  - asdf
+  - git
+  - nvm
+  - yarn
+  - pnpm
+  - graphicsmagick
+  - commitizen
+  - cmatrix
+  - vips
+  - starship
+  - ansible
+  - terraform
+  - awscli
+  - kubectl
+  - helm
+  - docker
+  - jq
+  - yq
+  - tmux
+  - fzf
+  - nmap
+  - ripgrep
+  - lazygit
+  - tldr
+  - git-delta
+
+homebrew_cask_apps:
+  - raycast
+  - bitwarden
+  - google-chrome
+  - firefox
+  - brave-browser
+  - iterm2
+  - visual-studio-code
+  - docker
+  - rectangle
+  - slack
+  - zoom
+  - postman
+  - wireshark
+  - vagrant
+  - notion
+  - protonvpn
+  - protonmail-bridge
+  - spotify
+  - macvim
+  - skype
+
+vscode_extensions:
+  - GitHub.copilot
+  - ms-azuretools.vscode-docker
+  - ms-kubernetes-tools.vscode-kubernetes-tools
+  - hashicorp.terraform
+  - redhat.vscode-yaml
+  - eamodio.gitlens
+  - dbaeumer.vscode-eslint
+  - esbenp.prettier-vscode
+  - yzhang.markdown-all-in-one
+  - streetsidesoftware.code-spell-checker
+  - ms-python.python
+  - redhat.ansible
+  - Catppuccin.catppuccin-vsc
+
+
+git_config:
+  - { name: 'user.name', value: 'Your Name' }
+  - { name: 'user.email', value: 'you@your-domain.com' }
+  - { name: 'core.editor', value: 'vim' }
+  - { name: 'init.defaultBranch', value: 'main' }
+  - {
+      name: 'alias.lg',
+      value: "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit",
+    }

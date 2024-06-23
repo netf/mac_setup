@@ -1,0 +1,24 @@
+---
+- name: Get list of installed VS Code extensions
+  command: code --list-extensions
+  register: installed_extensions
+  changed_when: false
+
+- name: Install VS Code extensions
+  command: code --install-extension {{ item }}
+  loop: "{{ vscode_extensions }}"
+  when: item not in installed_extensions.stdout_lines
+
+- name: Ensure Catppuccin theme is installed
+  command: code --install-extension Catppuccin.catppuccin-vsc
+  when: '"Catppuccin.catppuccin-vsc" not in installed_extensions.stdout_lines'
+
+- name: Configure VS Code settings
+  template:
+    src: vscode_settings.json.j2
+    dest: ~/Library/Application Support/Code/User/settings.json
+
+- name: Configure VS Code keybindings
+  template:
+    src: vscode_keybindings.json.j2
+    dest: ~/Library/Application Support/Code/User/keybindings.json
