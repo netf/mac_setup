@@ -6,11 +6,31 @@
         name: gnupg
         state: present
 
+    - name: Check GPG version
+      command: gpg --version
+      register: gpg_version
+      changed_when: false
+
+    - name: Display GPG version
+      debug:
+        var: gpg_version.stdout_lines
+
     - name: Ensure GPG directory exists
       file:
         path: "{{ ansible_env.HOME }}/.gnupg"
         state: directory
         mode: '0700'
+
+    - name: Install pinentry-mac
+      homebrew:
+        name: pinentry-mac
+        state: present
+
+    - name: Ensure pinentry-mac is correctly linked
+      shell: |
+        ln -sf /opt/homebrew/bin/pinentry-mac /usr/local/bin/pinentry-mac
+      become: true
+      when: ansible_os_family == "Darwin"
 
     - name: Configure GPG agent
       template:
@@ -18,16 +38,58 @@
         dest: "{{ ansible_env.HOME }}/.gnupg/gpg-agent.conf"
         mode: '0600'
 
-    - name: Install pinentry-mac
-      homebrew:
-        name: pinentry-mac
-        state: present
-
     - name: Configure GPG
       template:
         src: gpg.conf.j2
         dest: "{{ ansible_env.HOME }}/.gnupg/gpg.conf"
         mode: '0600'
+
+    - name: Restart GPG agent
+      shell: |
+        gpgconf --kill gpg-agent
+        gpg-agent --daemon
+      changed_when: false
+
+    - name: Get existing GPG key fingerprint
+      shell: |
+        gpg --list-secret-keys --with-colons --fingerprint | awk -F: '$1 == "fpr" {print $10; exit}'
+      register: existing_gpg_fingerprint
+      changed_when: false
+      failed_when: false
+
+    - name: Display existing GPG key fingerprint
+      debug:
+        var: existing_gpg_fingerprint.stdout
+
+    - name: Delete existing GPG secret key if reset is requested
+      shell: gpg --batch --yes --delete-secret-keys {{ existing_gpg_fingerprint.stdout }}
+      register: delete_secret_key_result
+      when:
+        - existing_gpg_fingerprint.stdout != ""
+        - reset_gpg_key | default(false) | bool
+
+    - name: Display delete secret key result
+      debug:
+        var: delete_secret_key_result
+      when: delete_secret_key_result is defined
+
+    - name: Delete existing GPG public key if reset is requested
+      shell: gpg --batch --yes --delete-keys {{ existing_gpg_fingerprint.stdout }}
+      register: delete_public_key_result
+      when:
+        - existing_gpg_fingerprint.stdout != ""
+        - reset_gpg_key | default(false) | bool
+
+    - name: Display delete public key result
+      debug:
+        var: delete_public_key_result
+      when: delete_public_key_result is defined
+
+    - name: Remove trustdb.gpg if resetting key
+      file:
+        path: "{{ ansible_env.HOME }}/.gnupg/trustdb.gpg"
+        state: absent
+      when: reset_gpg_key | default(false) | bool
 
     - name: Create GPG key generation configuration file
       template:
@@ -38,20 +100,47 @@
     - name: Generate GPG key
       shell: |
         gpg --batch --generate-key {{ ansible_env.HOME }}/.gnupg/gpg_gen_key.conf
-      args:
-        creates: "{{ ansible_env.HOME }}/.gnupg/trustdb.gpg"
       environment:
         GNUPGHOME: "{{ ansible_env.HOME }}/.gnupg"
+      register: gpg_key_generation
+      when: existing_gpg_fingerprint.stdout == "" or reset_gpg_key | default(false) | bool
+
+    - name: Display GPG key generation result
+      debug:
+        var: gpg_key_generation
+      when: gpg_key_generation is defined
 
     - name: Remove GPG key generation configuration file
       file:
         path: "{{ ansible_env.HOME }}/.gnupg/gpg_gen_key.conf"
         state: absent
 
+    - name: Verify GPG key export
+      shell: gpg --list-keys
+      register: gpg_list_keys
+      changed_when: false
+
+    - name: Display GPG key list
+      debug:
+        var: gpg_list_keys.stdout_lines
+
     - name: Get GPG key ID
       shell: gpg --list-secret-keys --keyid-format LONG | grep sec | awk '{print $2}' | awk -F'/' '{print $2}'
       register: gpg_key_id
       changed_when: false
+
+    - name: Display GPG key ID
+      debug:
+        var: gpg_key_id.stdout
+
+    - name: Export public GPG key
+      shell: gpg --armor --export {{ gpg_key_id.stdout }}
+      register: gpg_public_key
+      changed_when: false
+
+    - name: Display exported GPG public key (first line)
+      debug:
+        msg: "{{ gpg_public_key.stdout_lines[0] | default('Empty key') }}"
 
     - name: Configure Git to use GPG
       git_config:
@@ -68,25 +157,64 @@
         name: gh
         state: present
 
+    - name: Check GitHub CLI version
+      command: gh --version
+      register: gh_version
+      changed_when: false
+
+    - name: Display GitHub CLI version
+      debug:
+        var: gh_version.stdout_lines
+
     - name: Check GitHub CLI authentication status
       command: gh auth status
       register: gh_auth_status
       changed_when: false
       failed_when: false
 
+    - name: Display GitHub CLI auth status
+      debug:
+        var: gh_auth_status
+
     - name: Authenticate GitHub CLI if not already authenticated
       command: gh auth login -h github.com -p https -w
       when: gh_auth_status.rc != 0
+      register: gh_auth_login
 
-    - name: Export public GPG key
-      shell: gpg --armor --export {{ gpg_key_id.stdout }}
-      register: gpg_public_key
-      changed_when: false
+    - name: Display GitHub CLI auth login result
+      debug:
+        var: gh_auth_login
+      when: gh_auth_login is defined
+
+    # - name: Refresh GitHub CLI authentication with GPG key scope
+    #   command: gh auth refresh -h github.com -s read:gpg_key,write:gpg_key
+    #   changed_when: false
+    #   register: gh_auth_refresh
+
+    # - name: Display GitHub CLI auth refresh result
+    #   debug:
+    #     var: gh_auth_refresh
 
     - name: Check if GPG key already exists on GitHub
       command: gh gpg-key list
       register: gh_gpg_keys
       changed_when: false
+
+    - name: Remove existing GPG key from GitHub if reset is requested
+      command: gh gpg-key delete {{ gpg_key_id.stdout }} --yes
+      when:
+        - reset_gpg_key | default(false) | bool
+        - gpg_key_id.stdout is defined and gpg_key_id.stdout != ""
+        - gpg_key_id.stdout in gh_gpg_keys.stdout
+      register: gh_delete_key_result
+      failed_when:
+        - gh_delete_key_result.rc != 0
+        - '"not found" not in gh_delete_key_result.stderr'
+
+    - name: Display GitHub GPG key deletion result
+      debug:
+        var: gh_delete_key_result
+      when: gh_delete_key_result is defined
 
     - name: Add GPG key to GitHub
       shell: |
@@ -96,7 +224,14 @@
       failed_when:
         - gh_add_gpg_key.rc != 0
         - '"already exists" not in gh_add_gpg_key.stderr'
-      when: gpg_key_id.stdout not in gh_gpg_keys.stdout
+      when:
+        - gpg_public_key.stdout | default('') | trim != ''
+        - gpg_key_id.stdout not in gh_gpg_keys.stdout or reset_gpg_key | default(false) | bool
+
+    - name: Display GitHub GPG key addition result
+      debug:
+        var: gh_add_gpg_key
+      when: gh_add_gpg_key is defined
 
     - name: Add GPG configuration to .zshrc
       blockinfile:
