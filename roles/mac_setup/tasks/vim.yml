@@ -5,29 +5,27 @@
         name: neovim
         state: present
 
-    - name: Backup existing Neovim configuration
-      command: mv ~/.config/nvim ~/.config/nvim.bak
+    - name: Backup Neovim directories
+      ansible.builtin.shell: |
+        for dir in ~/.config/nvim ~/.local/state/nvim ~/.cache/nvim; do
+          if [ -d "$dir" ] && [ ! -d "${dir}.bak" ]; then
+            mv "$dir" "${dir}.bak"
+          elif [ -d "$dir" ] && [ -d "${dir}.bak" ]; then
+            rm -rf "${dir}.bak"
+            mv "$dir" "${dir}.bak"
+          fi
+        done
       args:
-        creates: ~/.config/nvim.bak
-      ignore_errors: true
-
-    - name: Backup existing Neovim state
-      command: mv ~/.local/state/nvim ~/.local/state/nvim.bak
-      args:
-        creates: ~/.local/state/nvim.bak
-      ignore_errors: true
-
-    - name: Backup existing Neovim cache
-      command: mv ~/.cache/nvim ~/.cache/nvim.bak
-      args:
-        creates: ~/.cache/nvim.bak
-      ignore_errors: true
+        executable: /bin/bash
+      register: backup_result
+      changed_when: backup_result.stdout != ""
 
     - name: Clone LazyVim repository
       git:
         repo: https://github.com/LazyVim/starter
         dest: ~/.config/nvim
         version: main
+        force: yes
 
     - name: Remove .git directory from LazyVim config
       file:
@@ -46,6 +44,15 @@
         path: ~/.zshrc
         line: 'alias vim="nvim"'
         create: yes
+
+    - name: Ensure LazyVim configuration directories exist
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - ~/.config/nvim/lua/config
+        - ~/.config/nvim/lua/plugins
 
     - name: Add LazyVim configuration
       copy:
@@ -76,7 +83,6 @@
             { "ellisonleao/gruvbox.nvim" },
             { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
             { "romgrk/github-light.vim" },
-
             -- Configure LazyVim to load catppuccin-frappe
             {
               "LazyVim/LazyVim",
@@ -85,3 +91,32 @@
               },
             },
           }
+
+  rescue:
+    - name: Restore Neovim backups on failure
+      ansible.builtin.shell: |
+        for dir in ~/.config/nvim ~/.local/state/nvim ~/.cache/nvim; do
+          if [ -d "${dir}.bak" ]; then
+            rm -rf "$dir"
+            mv "${dir}.bak" "$dir"
+          fi
+        done
+      args:
+        executable: /bin/bash
+      when: backup_result is defined and backup_result.changed
+
+    - name: Failure message
+      debug:
+        msg: "LazyVim setup failed. Original configurations have been restored."
+
+  always:
+    - name: Ensure Neovim directories have correct permissions
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+        owner: "{{ ansible_user_id }}"
+      loop:
+        - ~/.config/nvim
+        - ~/.local/state/nvim
+        - ~/.cache/nvim

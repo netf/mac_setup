@@ -29,6 +29,7 @@ homebrew_packages:
   - terraform
   - awscli
   - kubectl
+  - kubectx
   - helm
   - docker
   - jq
@@ -43,6 +44,15 @@ homebrew_packages:
   - httpie
   - neovim
   - fd
+  - aws-vault
+  - k9s
+  - minikube
+  - kind
+  - mtr
+  - iperf
+  - vault
+  - ctags
+  - shellcheck
 
 homebrew_cask_apps:
   - raycast
@@ -63,7 +73,6 @@ homebrew_cask_apps:
   - protonvpn
   - protonmail-bridge
   - spotify
-  - macvim
   - skype
 
 vscode_extensions:

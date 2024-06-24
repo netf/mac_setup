@@ -2,6 +2,7 @@
 - import_tasks: sudo_setup.yml
 - import_tasks: homebrew.yml
 - import_tasks: zsh.yml
+- import_tasks: ssh.yml
 - import_tasks: vscode.yml
 - import_tasks: iterm2.yml
 - import_tasks: tmux.yml
