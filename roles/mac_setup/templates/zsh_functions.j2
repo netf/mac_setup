@@ -1,0 +1,194 @@
+# Git functions
+function gfetch() {
+  git fetch --all --prune
+  git branch -vv | grep ': gone]' | awk '{print $1}' | xargs git branch -D
+}
+
+function gswitch() {
+  local branches branch
+  branches=$(git branch -a) &&
+  branch=$(echo "$branches" | fzf +s +m -e) &&
+  git checkout $(echo "$branch" | sed "s:.* remotes/origin/::" | sed "s:.* ::")
+}
+
+function gshow() {
+  git log --graph --color=always \
+      --format="%C(auto)%h%d %s %C(black)%C(bold)%cr" "$@" |
+  fzf --ansi --no-sort --reverse --tiebreak=index --bind=ctrl-s:toggle-sort \
+      --bind "ctrl-m:execute:
+                (grep -o '[a-f0-9]\{7\}' | head -1 |
+                xargs -I % sh -c 'git show --color=always % | less -R') << 'FZF-EOF'
+                {}
+FZF-EOF"
+}
+
+function gstash() {
+  local out q k sha
+  while out=$(
+    git stash list --pretty="%C(yellow)%h %>(14)%Cgreen%cr %C(blue)%gs" |
+    fzf --ansi --no-sort --query="$q" --print-query \
+        --expect=ctrl-d,ctrl-b);
+  do
+    mapfile -t out <<< "$out"
+    q="${out[0]}"
+    k="${out[1]}"
+    sha="${out[-1]}"
+    sha="${sha%% *}"
+    [[ -z "$sha" ]] && continue
+    if [[ "$k" == 'ctrl-d' ]]; then
+      git diff $sha
+    elif [[ "$k" == 'ctrl-b' ]]; then
+      git stash branch "stash-$sha" $sha
+      break;
+    else
+      git stash show -p $sha
+    fi
+  done
+}
+
+# Code search function
+function codesearch() {
+  rg --color=always --line-number --no-heading --smart-case "${*:-}" |
+    fzf --ansi \
+        --color "hl:-1:underline,hl+:-1:underline:reverse" \
+        --delimiter : \
+        --preview 'bat --style=numbers --color=always --highlight-line {2} {1}' \
+        --preview-window 'up,60%,border-bottom,+{2}+3/3,~3'
+}
+
+# AWS functions
+function av-add() { aws-vault add "$1" }
+function av-list() { aws-vault list }
+function av-exec() {
+  local profile=$(aws-vault list --profiles | fzf --prompt="Select AWS Profile: ")
+  [[ -n "$profile" ]] && aws-vault exec "$profile" -- "$@"
+}
+function av-switch() {
+  local profile=$(aws-vault list --profiles | fzf --prompt="Select AWS Profile: ")
+  if [[ -n "$profile" ]]; then
+    eval $(aws-vault exec "$profile" -- env | grep AWS | sed 's/^/export /')
+    echo "Switched to AWS profile: $profile"
+  fi
+}
+function av-creds() {
+  local profile=$(aws-vault list --profiles | fzf --prompt="Select AWS Profile: ")
+  [[ -n "$profile" ]] && aws-vault exec "$profile" -- env | grep AWS
+}
+
+# Kubernetes functions
+function k-switch-context() { kubectx | fzf --prompt="Select Kubernetes Context: " | xargs kubectx }
+function k-switch-namespace() { kubens | fzf --prompt="Select Kubernetes Namespace: " | xargs kubens }
+function k-get-pods() { kubectl get pods | fzf --multi --header-lines=1 --prompt="Select Pod(s): " | awk '{print $1}' }
+function k-describe-pod() {
+  local pod=$(k-get-pods)
+  [[ -n "$pod" ]] && kubectl describe pod "$pod"
+}
+function k-logs() {
+  local pod=$(k-get-pods)
+  [[ -n "$pod" ]] && kubectl logs -f "$pod"
+}
+function k-exec() {
+  local pod=$(k-get-pods)
+  [[ -n "$pod" ]] && kubectl exec -it "$pod" -- /bin/sh
+}
+function k-port-forward() {
+  local pod=$(k-get-pods)
+  if [[ -n "$pod" ]]; then
+    read "port?Enter port to forward (local:remote): "
+    kubectl port-forward "$pod" "$port"
+  fi
+}
+
+# Refined Interactive Kubernetes Pod Management Function
+function k-pod-manage() {
+  local namespace=$(kubens | fzf --prompt="Select Namespace: ")
+  if [[ -z "$namespace" ]]; then
+    echo "No namespace selected. Exiting."
+    return 1
+  fi
+
+  local header_lines=2
+  local preview_cmd="kubectl describe pod {1} -n $namespace"
+  local legend=":: d-Describe | l-Logs | s-Shell | p-PortForward | k-Kill | r-Refresh | q-Quit ::"
+
+  while true; do
+    local selection=$(kubectl get pods -n "$namespace" -o wide |
+      fzf --header-lines=$header_lines \
+          --preview "$preview_cmd" \
+          --preview-window=down:70% \
+          --header "$legend" \
+          --bind "d:execute($preview_cmd | less > /dev/tty)" \
+          --bind "l:execute(kubectl logs {1} -n $namespace | less > /dev/tty)" \
+          --bind "s:execute(kubectl exec -it {1} -n $namespace -- /bin/sh > /dev/tty)" \
+          --bind "p:execute(echo 'Enter port (local:remote):' && read port && kubectl port-forward {1} \$port -n $namespace > /dev/tty < /dev/tty)" \
+          --bind "k:execute(kubectl delete pod {1} -n $namespace > /dev/tty)" \
+          --bind "r:reload(kubectl get pods -n $namespace -o wide)" \
+          --bind "q:abort" \
+          --height 100% \
+          --layout reverse \
+          --info inline \
+          --prompt "Select Pod: " \
+          --pointer "▶" \
+          --no-mouse)
+
+    if [[ -z "$selection" ]]; then
+      echo "No pod selected or action aborted. Exiting."
+      break
+    fi
+
+    local pod_name=$(echo "$selection" | awk '{print $1}')
+    echo "Selected pod: $pod_name"
+    echo "Press any key to continue..."
+    read -k1 -s
+  done
+}
+
+# Alias for quick access
+alias kpm="k-pod-manage"
+
+# AWS EKS functions
+function get-eks-token() {
+  local profile=$(aws-vault list --profiles | fzf --prompt="Select AWS Profile for EKS: ")
+  [[ -n "$profile" ]] && aws-vault exec "$profile" -- aws eks get-token --cluster-name $(kubectl config current-context) | jq -r '.status.token'
+}
+function update-kubeconfig-eks() {
+  local profile=$(aws-vault list --profiles | fzf --prompt="Select AWS Profile for EKS: ")
+  if [[ -n "$profile" ]]; then
+    read "cluster?Enter EKS cluster name: "
+    aws-vault exec "$profile" -- aws eks update-kubeconfig --name "$cluster"
+  fi
+}
+function switch-aws-k8s() {
+  local profile=$(aws-vault list --profiles | fzf --prompt="Select AWS Profile: ")
+  if [[ -n "$profile" ]]; then
+    eval $(aws-vault exec "$profile" -- env | grep AWS | sed 's/^/export /')
+    echo "Switched to AWS profile: $profile"
+    update-kubeconfig-eks
+  fi
+}
+
+# Utility functions
+function vmrss() {
+    if [ $# -eq 0 ]; then
+        echo "Usage: vmrss <PID>"
+    else
+        rss_kb=$(ps -o rss= -p $1)
+        if [ "$rss_kb" -eq 0 ]; then
+            echo "No such process or no memory usage information available"
+        elif [ "$rss_kb" -lt 1024 ]; then
+            echo "${rss_kb} KB"
+        else
+            rss_mb=$((rss_kb / 1024))
+            echo "${rss_mb} MB"
+        fi
+    fi
+}
+function mkcd() { mkdir -p "$@" && cd "$_" }
+function hg() { history | grep "$1" }
+function killport() { lsof -ti tcp:$1 | xargs kill }
+function weather() { curl wttr.in/$1 }
+function genpass() { openssl rand -base64 ${1:-12} }
+function timezsh() {
+  shell=${1-$SHELL}
+  for i in $(seq 1 10); do /usr/bin/time $shell -i -c exit; done
+}

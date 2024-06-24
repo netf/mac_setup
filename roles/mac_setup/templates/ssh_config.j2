@@ -1,13 +1,11 @@
 Host *
   AddKeysToAgent yes
   UseKeychain yes
-
 Host github.com
   HostName github.com
   User git
   IdentityFile ~/.ssh/github
   IdentitiesOnly yes
-
 Host i-*
   IdentityFile ~/.ssh/id_rsa
   User ec2-user

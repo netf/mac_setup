@@ -1,0 +1,39 @@
+return {
+  -- Add your custom plugins here
+  { "tpope/vim-surround" },
+  { "github/copilot.vim" },
+  {
+    "folke/todo-comments.nvim",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    opts = {
+      -- your configuration comes here
+      -- or leave it empty to use the default settings
+    },
+  },
+  {
+    "folke/trouble.nvim",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    opts = {
+      -- your configuration comes here
+      -- or leave it empty to use the default settings
+    },
+  },
+  {
+    "folke/which-key.nvim",
+    event = "VeryLazy",
+    init = function()
+      vim.o.timeout = true
+      vim.o.timeoutlen = 300
+    end,
+    opts = {
+      -- your configuration comes here
+      -- or leave it empty to use the default settings
+    },
+  },
+  {
+    "nvim-treesitter/nvim-treesitter-context",
+    event = "BufReadPre",
+    config = true,
+  },
+  -- Add more plugins as needed
+}

@@ -14,6 +14,50 @@
     - { domain: "com.apple.dock", key: "orientation", type: "string", value: "left" }
     - { domain: "com.apple.dock", key: "tilesize", type: "float", value: 36 }
     - { domain: "com.apple.dock", key: "minimize-to-application", type: "bool", value: true }
+    - { domain: "com.apple.finder", key: "FXPreferredViewStyle", type: "string", value: "Nlsv" }
+    - { domain: "com.apple.finder", key: "NewWindowTarget", type: "string", value: "PfHm" }
+    - { domain: "com.apple.finder", key: "AppleShowAllFiles", type: "string", value: "YES" }  # Changed from bool to string
+    - { domain: "NSGlobalDomain", key: "AppleShowAllExtensions", type: "bool", value: true }
   notify:
     - Restart Dock
     - Restart Finder
+
+- name: Set keyboard preferences
+  osx_defaults:
+    domain: NSGlobalDomain
+    key: "{{ item.key }}"
+    type: "{{ item.type }}"
+    value: "{{ item.value }}"
+  loop:
+    - { key: "KeyRepeat", type: "float", value: 2.0 }
+    - { key: "InitialKeyRepeat", type: "float", value: 15.0 }
+    - { key: "ApplePressAndHoldEnabled", type: "bool", value: false }
+
+- name: Set trackpad preferences
+  osx_defaults:
+    domain: com.apple.driver.AppleBluetoothMultitouch.trackpad
+    key: "{{ item.key }}"
+    type: "{{ item.type }}"
+    value: "{{ item.value }}"
+  loop:
+    - { key: "Clicking", type: "int", value: 1 }
+    - { key: "TrackpadThreeFingerDrag", type: "bool", value: true }
+
+- name: Set energy saving preferences
+  osx_defaults:
+    domain: com.apple.PowerManagement
+    key: "{{ item.key }}"
+    type: "{{ item.type }}"
+    value: "{{ item.value }}"
+  loop:
+    - { key: "DiskSleep", type: "int", value: 10 }
+    - { key: "DisplaySleep", type: "int", value: 15 }
+    - { key: "SleepOnPowerButton", type: "int", value: 0 }
+
+- name: Disable automatic rearrangement of spaces based on most recent use
+  osx_defaults:
+    domain: com.apple.dock
+    key: mru-spaces
+    type: bool
+    value: false
+  notify: Restart Dock

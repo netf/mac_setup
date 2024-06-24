@@ -1,11 +1,11 @@
 ---
 - name: Install Oh My Zsh
-  shell: sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  ansible.builtin.shell: sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
   args:
     creates: ~/.oh-my-zsh
 
 - name: Install Zsh plugins
-  git:
+  ansible.builtin.git:
     repo: "https://github.com/{{ item }}.git"
     dest: "~/.oh-my-zsh/custom/plugins/{{ item | split('/') | last }}"
   loop:
@@ -15,33 +15,32 @@
     - zdharma-continuum/fast-syntax-highlighting
 
 - name: Install Powerlevel10k theme
-  git:
+  ansible.builtin.git:
     repo: https://github.com/romkatv/powerlevel10k.git
     dest: ~/.oh-my-zsh/custom/themes/powerlevel10k
     depth: 1
 
 - name: Install asdf version manager
-  git:
+  ansible.builtin.git:
     repo: https://github.com/asdf-vm/asdf.git
     dest: ~/.asdf
     version: v0.14.0
 
 - name: Configure Zsh
-  template:
+  ansible.builtin.template:
     src: zshrc.j2
     dest: ~/.zshrc
 
 - name: Set Zsh as default shell
-  become: true
-  user:
+  ansible.builtin.user:
     name: "{{ ansible_user_id }}"
     shell: /bin/zsh
+  become: true
 
 - name: Install Powerlevel10k recommended font
   community.general.homebrew_cask:
     name: font-meslo-lg-nerd-font
     state: present
-
 
 - name: Copy Powerlevel10k configuration file
   copy:

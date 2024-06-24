@@ -1,6 +1,16 @@
 ---
-- name: Setup Mac for DevOps Engineer
+- name: Set up MacBook for DevOps Engineer
   hosts: localhost
   connection: local
+  vars_files:
+    - vars/main.yml
   roles:
     - mac_setup
+
+  pre_tasks:
+      - name: Ensure required variables are set
+        assert:
+          that:
+            - git_user_name is defined
+            - git_user_email is defined
+          fail_msg: "Please ensure git_user_name and git_user_email are set in the inventory or passed as extra vars"

@@ -5,7 +5,6 @@
         path: "{{ ansible_env.HOME }}/.ssh"
         state: directory
         mode: '0700'
-
     - name: Create SSH key for GitHub
       openssh_keypair:
         path: "{{ ansible_env.HOME }}/.ssh/github"
@@ -13,7 +12,6 @@
         comment: "{{ ansible_env.USER }}@github"
         force: no
       ignore_errors: true
-
     - name: Create SSH key for AWS EC2
       openssh_keypair:
         path: "{{ ansible_env.HOME }}/.ssh/id_rsa"
@@ -21,47 +19,39 @@
         size: 4096
         comment: "{{ ansible_env.USER }}@aws"
         force: no
-
     - name: Create AWS SSH proxy script
-      copy:
+      template:
+        src: aws-ssh-proxy.sh.j2
         dest: "{{ ansible_env.HOME }}/.ssh/aws-ssh-proxy.sh"
-        content: "{{ lookup('file', 'aws-ssh-proxy.sh') }}"
         mode: '0755'
-
     - name: Ensure SSH config file exists
       file:
         path: "{{ ansible_env.HOME }}/.ssh/config"
         state: touch
         mode: '0600'
-
     - name: Configure SSH
       template:
         src: ssh_config.j2
         dest: "{{ ansible_env.HOME }}/.ssh/config"
         mode: '0600'
-
     - name: Add SSH keys to keychain
       command: ssh-add --apple-use-keychain {{ item }}
       loop:
         - "{{ ansible_env.HOME }}/.ssh/github"
         - "{{ ansible_env.HOME }}/.ssh/id_rsa"
       changed_when: false
-
     - name: Install GitHub CLI
       homebrew:
         name: gh
         state: present
-
     - name: Check if GitHub CLI is authenticated
       command: gh auth status
       register: gh_auth_status
       changed_when: false
       failed_when: false
-
     - name: Authenticate GitHub CLI if not already authenticated
       command: gh auth login -p ssh -w
       when: gh_auth_status.rc != 0
-
     - name: Add SSH key to GitHub
       command: gh ssh-key add {{ ansible_env.HOME }}/.ssh/github.pub -t "{{ ansible_hostname }}"
       register: gh_add_key
@@ -69,7 +59,6 @@
       failed_when:
         - gh_add_key.rc != 0
         - "'already exists' not in gh_add_key.stderr"
-
     - name: Set strict permissions on SSH files
       file:
         path: "{{ item }}"
@@ -79,7 +68,6 @@
         - "{{ ansible_env.HOME }}/.ssh/github.pub"
         - "{{ ansible_env.HOME }}/.ssh/id_rsa"
         - "{{ ansible_env.HOME }}/.ssh/id_rsa.pub"
-
     - name: Configure SSH client for better security
       blockinfile:
         path: "{{ ansible_env.HOME }}/.ssh/config"
@@ -89,28 +77,23 @@
             HostKeyAlgorithms ssh-ed25519-cert-v01@openssh.com,ssh-rsa-cert-v01@openssh.com,ssh-ed25519,ssh-rsa
             Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
             MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com
-
     - name: Set up SSH key rotation reminder
       cron:
         name: "SSH Key Rotation Reminder"
         special_time: monthly
         job: "echo 'Remember to rotate your SSH keys' | mail -s 'SSH Key Rotation Reminder' {{ ansible_env.USER }}@localhost"
-
     - name: Install AWS CLI
       homebrew:
         name: awscli
         state: present
-
     - name: Install AWS Session Manager Plugin
       homebrew:
         name: session-manager-plugin
         state: present
-
   rescue:
     - name: Display error message
       debug:
         msg: "SSH setup failed. Please check the error messages and try again."
-
   always:
     - name: Ensure .ssh directory has correct permissions
       file:

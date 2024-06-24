@@ -55,42 +55,19 @@
         - ~/.config/nvim/lua/plugins
 
     - name: Add LazyVim configuration
-      copy:
+      template:
+        src: nvim_options.lua.j2
         dest: ~/.config/nvim/lua/config/options.lua
-        content: |
-          -- Add your own customizations here
-          vim.opt.relativenumber = true
-          vim.opt.wrap = false
-          -- Add more options as needed
 
     - name: Add custom LazyVim plugins
-      copy:
+      template:
+        src: nvim_plugins.lua.j2
         dest: ~/.config/nvim/lua/plugins/user.lua
-        content: |
-          return {
-            -- Add your custom plugins here
-            { "tpope/vim-surround" },
-            { "github/copilot.vim" },
-            -- Add more plugins as needed
-          }
 
     - name: Configure LazyVim colorschemes
-      copy:
+      template:
+        src: nvim_colorscheme.lua.j2
         dest: ~/.config/nvim/lua/plugins/colorscheme.lua
-        content: |
-          return {
-            -- add gruvbox
-            { "ellisonleao/gruvbox.nvim" },
-            { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
-            { "romgrk/github-light.vim" },
-            -- Configure LazyVim to load catppuccin-frappe
-            {
-              "LazyVim/LazyVim",
-              opts = {
-                colorscheme = "catppuccin-frappe",
-              },
-            },
-          }
 
   rescue:
     - name: Restore Neovim backups on failure
