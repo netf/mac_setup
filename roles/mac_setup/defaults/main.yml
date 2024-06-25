@@ -57,6 +57,7 @@ homebrew_packages:
 homebrew_cask_apps:
   - raycast
   - bitwarden
+  - 1password
   - google-chrome
   - firefox
   - brave-browser

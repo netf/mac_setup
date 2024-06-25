@@ -8,5 +8,6 @@
 - import_tasks: tmux.yml
 - import_tasks: vim.yml
 - import_tasks: git.yml
-- import_tasks: gpg.yml
+# - import_tasks: gpg.yml
 - import_tasks: macos_preferences.yml
+- import_tasks: 1password.yml

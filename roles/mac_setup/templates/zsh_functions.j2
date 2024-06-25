@@ -57,20 +57,20 @@ function codesearch() {
 }
 
 # AWS functions
-function av-add() { aws-vault add "$1" }
-function av-list() { aws-vault list }
-function av-exec() {
+function ava() { aws-vault add "$1" }
+function avl() { aws-vault list }
+function ave() {
   local profile=$(aws-vault list --profiles | fzf --prompt="Select AWS Profile: ")
   [[ -n "$profile" ]] && aws-vault exec "$profile" -- "$@"
 }
-function av-switch() {
+function avs() {
   local profile=$(aws-vault list --profiles | fzf --prompt="Select AWS Profile: ")
   if [[ -n "$profile" ]]; then
     eval $(aws-vault exec "$profile" -- env | grep AWS | sed 's/^/export /')
     echo "Switched to AWS profile: $profile"
   fi
 }
-function av-creds() {
+function avc() {
   local profile=$(aws-vault list --profiles | fzf --prompt="Select AWS Profile: ")
   [[ -n "$profile" ]] && aws-vault exec "$profile" -- env | grep AWS
 }
