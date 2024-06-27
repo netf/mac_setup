@@ -1,9 +1,12 @@
 ---
 - name: Restart Dock
-  command: killall Dock
+  ansible.builtin.command: killall Dock
+  changed_when: false
 
 - name: Restart Finder
-  command: killall Finder
+  ansible.builtin.command: killall Finder
+  changed_when: false
 
 - name: Restart Terminal
-  command: killall Terminal
+  ansible.builtin.command: killall Terminal
+  changed_when: false

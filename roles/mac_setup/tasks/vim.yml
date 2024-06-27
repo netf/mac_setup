@@ -21,14 +21,14 @@
       changed_when: backup_result.stdout != ""
 
     - name: Clone LazyVim repository
-      git:
+      ansible.builtin.git:
         repo: https://github.com/LazyVim/starter
         dest: ~/.config/nvim
         version: main
-        force: yes
+        force: true
 
     - name: Remove .git directory from LazyVim config
-      file:
+      ansible.builtin.file:
         path: ~/.config/nvim/.git
         state: absent
 
@@ -40,13 +40,14 @@
         state: present
 
     - name: Add Neovim alias to .zshrc
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: ~/.zshrc
         line: 'alias vim="nvim"'
-        create: yes
+        mode: '0644'
+        create: true
 
     - name: Ensure LazyVim configuration directories exist
-      file:
+      ansible.builtin.file:
         path: "{{ item }}"
         state: directory
         mode: '0755'
@@ -55,19 +56,22 @@
         - ~/.config/nvim/lua/plugins
 
     - name: Add LazyVim configuration
-      template:
+      ansible.builtin.template:
         src: nvim_options.lua.j2
         dest: ~/.config/nvim/lua/config/options.lua
+        mode: '0644'
 
     - name: Add custom LazyVim plugins
-      template:
+      ansible.builtin.template:
         src: nvim_plugins.lua.j2
         dest: ~/.config/nvim/lua/plugins/user.lua
+        mode: '0644'
 
     - name: Configure LazyVim colorschemes
-      template:
+      ansible.builtin.template:
         src: nvim_colorscheme.lua.j2
         dest: ~/.config/nvim/lua/plugins/colorscheme.lua
+        mode: '0644'
 
   rescue:
     - name: Restore Neovim backups on failure
@@ -80,15 +84,16 @@
         done
       args:
         executable: /bin/bash
+      changed_when: false
       when: backup_result is defined and backup_result.changed
 
     - name: Failure message
-      debug:
+      ansible.builtin.debug:
         msg: "LazyVim setup failed. Original configurations have been restored."
 
   always:
     - name: Ensure Neovim directories have correct permissions
-      file:
+      ansible.builtin.file:
         path: "{{ item }}"
         state: directory
         mode: '0755'

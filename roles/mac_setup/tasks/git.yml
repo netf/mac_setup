@@ -9,4 +9,7 @@
     - { name: 'user.email', value: "{{ git_user_email }}" }
     - { name: 'core.editor', value: 'vim' }
     - { name: 'init.defaultBranch', value: 'main' }
-    - { name: 'alias.lg', value: "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit" }
+    - name: 'alias.lg'
+      value: >
+        log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'
+        --abbrev-commit

@@ -10,14 +10,31 @@
   "editor.guides.bracketPairsHorizontal": true,
   "editor.guides.highlightActiveBracketPair": true,
   "editor.guides.indentation": true,
+  "editor.minimap.enabled": false,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true,
+    "source.organizeImports": true
+  },
+  "editor.suggestSelection": "first",
+  "editor.linkedEditing": true,
   "files.trimTrailingWhitespace": true,
+  "files.autoSave": "onFocusChange",
   "terminal.integrated.fontFamily": "Hack Nerd Font Mono",
+  "terminal.integrated.defaultProfile.osx": "zsh",
   "workbench.startupEditor": "newUntitledFile",
   "workbench.colorTheme": "Catppuccin Frappé",
+  "workbench.editor.enablePreview": false,
+  "workbench.iconTheme": "material-icon-theme",
   "git.enableSmartCommit": true,
   "git.autofetch": true,
+  "gitlens.codeLens.enabled": false,
   "explorer.confirmDelete": false,
   "explorer.confirmDragAndDrop": false,
+  "breadcrumbs.enabled": true,
+  "diffEditor.ignoreTrimWhitespace": false,
+  "window.zoomLevel": 0,
+  "debug.console.fontSize": 12,
   "[javascript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
@@ -30,9 +47,89 @@
   "[yaml]": {
     "editor.defaultFormatter": "redhat.vscode-yaml"
   },
+  "[ansible]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "redhat.ansible"
+  },
   "python.formatting.provider": "black",
   "python.linting.pylintEnabled": true,
   "python.linting.enabled": true,
   "go.useLanguageServer": true,
-  "terraform.formatOnSave": true
+  "terraform.formatOnSave": true,
+  "ansible.ansible.path": "ansible",
+  "ansible.ansible.useFullyQualifiedCollectionNames": true,
+  "ansible.validation.lint.enabled": true,
+  "ansible.validation.lint.path": "ansible-lint",
+  "ansible.validation.lint.arguments": "--exclude=no-changed-when,no-handler,fqcn-builtins,no-free-form,no-tabs,empty-lines,yaml",
+  "files.associations": {
+    "**/*.yml": "ansible",
+    "**/inventory/**/*": "ansible"
+  },
+  "yaml.customTags": [
+    "!vault",
+    "!ansible",
+    "!archive",
+    "!include"
+  ],
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/playbook": "**/*.yml"
+  },
+  "todo-tree.general.tags": [
+    "BUG",
+    "HACK",
+    "FIXME",
+    "TODO",
+    "XXX",
+    "[ ]",
+    "[x]"
+  ],
+  "todo-tree.highlights.defaultHighlight": {
+    "icon": "alert",
+    "type": "text",
+    "foreground": "red",
+    "background": "white",
+    "opacity": 50,
+    "iconColour": "blue"
+  },
+  "todo-tree.highlights.customHighlight": {
+    "TODO": {
+      "icon": "check",
+      "foreground": "black",
+      "background": "yellow"
+    },
+    "FIXME": {
+      "foreground": "black",
+      "background": "red"
+    }
+  },
+  "remote.SSH.remotePlatform": {
+    "your-remote-host": "linux"
+  },
+  "vim.easymotion": true,
+  "vim.incsearch": true,
+  "vim.useSystemClipboard": true,
+  "vim.useCtrlKeys": true,
+  "vim.hlsearch": true,
+  "vim.insertModeKeyBindings": [
+    {
+      "before": ["j", "j"],
+      "after": ["<Esc>"]
+    }
+  ],
+  "vim.normalModeKeyBindingsNonRecursive": [
+    {
+      "before": ["<leader>", "d"],
+      "after": ["d", "d"]
+    },
+    {
+      "before": ["<C-n>"],
+      "commands": [":nohl"]
+    }
+  ],
+  "vim.leader": "<space>",
+  "vim.handleKeys": {
+    "<C-a>": false,
+    "<C-f>": false
+  }
 }

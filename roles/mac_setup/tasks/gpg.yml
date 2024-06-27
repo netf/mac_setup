@@ -7,16 +7,16 @@
         state: present
 
     - name: Check GPG version
-      command: gpg --version
+      ansible.builtin.command: gpg --version
       register: gpg_version
       changed_when: false
 
     - name: Display GPG version
-      debug:
+      ansible.builtin.debug:
         var: gpg_version.stdout_lines
 
     - name: Ensure GPG directory exists
-      file:
+      ansible.builtin.file:
         path: "{{ ansible_env.HOME }}/.gnupg"
         state: directory
         mode: '0700'
@@ -27,42 +27,43 @@
         state: present
 
     - name: Ensure pinentry-mac is correctly linked
-      shell: |
+      ansible.builtin.shell: |
         ln -sf /opt/homebrew/bin/pinentry-mac /usr/local/bin/pinentry-mac
       become: true
       when: ansible_os_family == "Darwin"
 
     - name: Configure GPG agent
-      template:
+      ansible.builtin.template:
         src: gpg-agent.conf.j2
         dest: "{{ ansible_env.HOME }}/.gnupg/gpg-agent.conf"
         mode: '0600'
 
     - name: Configure GPG
-      template:
+      ansible.builtin.template:
         src: gpg.conf.j2
         dest: "{{ ansible_env.HOME }}/.gnupg/gpg.conf"
         mode: '0600'
 
     - name: Restart GPG agent
-      shell: |
+      ansible.builtin.shell: |
         gpgconf --kill gpg-agent
         gpg-agent --daemon
       changed_when: false
 
     - name: Get existing GPG key fingerprint
-      shell: |
+      ansible.builtin.shell: |
         gpg --list-secret-keys --with-colons --fingerprint | awk -F: '$1 == "fpr" {print $10; exit}'
       register: existing_gpg_fingerprint
       changed_when: false
       failed_when: false
+      pipe: true
 
     - name: Display existing GPG key fingerprint
-      debug:
+      ansible.builtin.debug:
         var: existing_gpg_fingerprint.stdout
 
     - name: Delete existing GPG secret key if reset is requested
-      shell: gpg --batch --yes --delete-secret-keys {{ existing_gpg_fingerprint.stdout }}
+      ansible.builtin.shell: gpg --batch --yes --delete-secret-keys {{ existing_gpg_fingerprint.stdout }}
       register: delete_secret_key_result
       when:
         - existing_gpg_fingerprint.stdout != ""

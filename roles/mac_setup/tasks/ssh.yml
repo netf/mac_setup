@@ -2,31 +2,31 @@
 - name: Comprehensive SSH Setup with 1Password and AWS EC2 Support
   block:
     - name: Ensure .ssh directory exists
-      file:
+      ansible.builtin.file:
         path: "{{ ansible_env.HOME }}/.ssh"
         state: directory
         mode: '0700'
 
     - name: Create AWS SSH proxy script
-      template:
+      ansible.builtin.template:
         src: aws-ssh-proxy.sh.j2
         dest: "{{ ansible_env.HOME }}/.ssh/aws-ssh-proxy.sh"
         mode: '0755'
 
     - name: Ensure SSH config file exists
-      file:
+      ansible.builtin.file:
         path: "{{ ansible_env.HOME }}/.ssh/config"
         state: touch
         mode: '0600'
 
     - name: Configure SSH
-      template:
+      ansible.builtin.template:
         src: ssh_config.j2
         dest: "{{ ansible_env.HOME }}/.ssh/config"
         mode: '0600'
 
     - name: Configure SSH client for better security
-      blockinfile:
+      ansible.builtin.blockinfile:
         path: "{{ ansible_env.HOME }}/.ssh/config"
         block: |
           Host *
@@ -48,12 +48,12 @@
 
   rescue:
     - name: Display error message
-      debug:
+      ansible.builtin.debug:
         msg: "SSH setup failed. Please check the error messages and try again."
 
   always:
     - name: Ensure .ssh directory has correct permissions
-      file:
+      ansible.builtin.file:
         path: "{{ ansible_env.HOME }}/.ssh"
         state: directory
         mode: '0700'

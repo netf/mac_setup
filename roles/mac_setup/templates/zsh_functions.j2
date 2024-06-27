@@ -56,23 +56,98 @@ function codesearch() {
         --preview-window 'up,60%,border-bottom,+{2}+3/3,~3'
 }
 
-# AWS functions
-function ava() { aws-vault add "$1" }
-function avl() { aws-vault list }
-function ave() {
-  local profile=$(aws-vault list --profiles | fzf --prompt="Select AWS Profile: ")
-  [[ -n "$profile" ]] && aws-vault exec "$profile" -- "$@"
+# Add a new AWS profile
+function ava() {
+  if [[ -z "$1" ]]; then
+    echo "Usage: ava <profile_name>"
+    return 1
+  fi
+  aws-vault add "$1"
 }
+
+# List AWS profiles
+function avl() {
+  aws-vault list
+}
+
+# Execute a command with temporary AWS credentials
+function ave() {
+  local profile duration cmd
+
+  # Select profile interactively if not provided
+  if [[ -z "$1" ]]; then
+    profile=$(aws-vault list --profiles | fzf --prompt="Select AWS Profile: ")
+  else
+    profile="$1"
+    shift
+  fi
+
+  # Exit if no profile selected
+  [[ -z "$profile" ]] && return 1
+
+  # Prompt for session duration
+  read -p "Enter session duration (default 1h): " duration
+  duration=${duration:-1h}
+
+  # Build command
+  cmd="aws-vault exec $profile --duration=$duration"
+
+  # If additional arguments are provided, execute them
+  if [[ $# -gt 0 ]]; then
+    $cmd -- "$@"
+  else
+    # Otherwise, start a new shell
+    $cmd -- $SHELL
+  fi
+}
+
+# Set AWS environment variables for the current shell
 function avs() {
   local profile=$(aws-vault list --profiles | fzf --prompt="Select AWS Profile: ")
   if [[ -n "$profile" ]]; then
     eval $(aws-vault exec "$profile" -- env | grep AWS | sed 's/^/export /')
     echo "Switched to AWS profile: $profile"
+    # Optionally set PS1 to indicate active profile
+    PS1="($profile) $PS1"
   fi
 }
+
+# Display AWS credentials for a profile
 function avc() {
   local profile=$(aws-vault list --profiles | fzf --prompt="Select AWS Profile: ")
-  [[ -n "$profile" ]] && aws-vault exec "$profile" -- env | grep AWS
+  if [[ -n "$profile" ]]; then
+    aws-vault exec "$profile" -- env | grep AWS
+  fi
+}
+
+# Remove AWS environment variables from the current shell
+function avr() {
+  unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN
+  echo "AWS environment variables removed"
+  # Reset PS1 if it was modified
+  PS1=$(echo $PS1 | sed 's/([^)]*) //')
+}
+
+# List all active aws-vault sessions
+function avls() {
+  ps aux | grep "[a]ws-vault session" | awk '{print $2, $11, $12, $13, $14}'
+}
+
+# Kill all active aws-vault sessions
+function avk() {
+  pkill -f "aws-vault session"
+  echo "All aws-vault sessions terminated"
+}
+
+# Delete an AWS profile
+function avd() {
+  local profile=$(aws-vault list --profiles | fzf --prompt="Select AWS Profile to delete: ")
+  if [[ -n "$profile" ]]; then
+      aws-vault remove "$profile"
+      echo "Profile '$profile' has been deleted."
+  else
+    echo "No profile selected. Deletion cancelled."
+  fi
 }
 
 # Kubernetes functions

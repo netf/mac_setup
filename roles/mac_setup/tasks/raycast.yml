@@ -1,0 +1,39 @@
+---
+- name: Configure Raycast
+  block:
+    - name: Install Raycast
+      community.general.homebrew_cask:
+        name: raycast
+        state: present
+
+    - name: Ensure Raycast configuration directory exists
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/Library/Application Support/com.raycast.macos"
+        state: directory
+        mode: '0755'
+
+
+    - name: Set Raycast to launch at login
+      community.general.osx_defaults:
+        domain: com.raycast.macos
+        key: launchAtLogin
+        type: bool
+        value: true
+
+    - name: Set Raycast hotkey
+      community.general.osx_defaults:
+        domain: com.raycast.macos
+        key: hotkey
+        type: string
+        value: "cmd+space"
+
+    - name: Disable Spotlight hotkey
+      ansible.builtin.shell: |
+        /usr/libexec/PlistBuddy -c "Set :AppleSymbolicHotKeys:64:enabled false" ~/Library/Preferences/com.apple.symbolichotkeys.plist
+      register: spotlight_hotkey_result
+      changed_when: spotlight_hotkey_result.rc == 0
+
+  rescue:
+    - name: Display error message
+      ansible.builtin.debug:
+        msg: "Raycast setup failed. Please check the error messages and try again."

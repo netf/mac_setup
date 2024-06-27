@@ -4,3 +4,8 @@ git_user_email: "{{ lookup('env', 'GIT_USER_EMAIL') | default('you@example.com',
 gpg_name: "{{ git_user_name }}"
 gpg_email: "{{ git_user_email }}"
 reset_gpg_key: false
+# Leave this empty to skip 1Password configuration
+onepassword_email: ""
+
+# Optional: Specify a shorthand if configuring 1Password
+# onepassword_shorthand: "my1password"

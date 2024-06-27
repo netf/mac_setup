@@ -6,24 +6,24 @@
         state: present
 
     - name: Create tmux configuration directory
-      file:
+      ansible.builtin.file:
         path: "{{ ansible_env.HOME }}/.tmux"
         state: directory
         mode: '0755'
 
     - name: Copy tmux configuration file
-      template:
+      ansible.builtin.template:
         src: tmux.conf.j2
         dest: "{{ ansible_env.HOME }}/.tmux.conf"
         mode: '0644'
 
     - name: Clone TPM (Tmux Plugin Manager)
-      git:
+      ansible.builtin.git:
         repo: 'https://github.com/tmux-plugins/tpm'
         dest: "{{ ansible_env.HOME }}/.tmux/plugins/tpm"
         version: master
         depth: 1
 
     - name: Install tmux plugins
-      command: "{{ ansible_env.HOME }}/.tmux/plugins/tpm/bin/install_plugins"
+      ansible.builtin.command: "{{ ansible_env.HOME }}/.tmux/plugins/tpm/bin/install_plugins"
       changed_when: false

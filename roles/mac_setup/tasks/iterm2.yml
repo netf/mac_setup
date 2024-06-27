@@ -6,30 +6,30 @@
         state: present
 
     - name: Install iTerm2 Python module
-      pip:
+      ansible.builtin.pip:
         name: iterm2
         state: present
 
     - name: Ensure iTerm2 configuration directory exists
-      file:
+      ansible.builtin.file:
         path: "{{ ansible_env.HOME }}/Library/Application Support/iTerm2/DynamicProfiles"
         state: directory
         mode: '0755'
 
     - name: Ensure iTerm2 AutoLaunch directory exists
-      file:
+      ansible.builtin.file:
         path: "{{ ansible_env.HOME }}/Library/Application Support/iTerm2/Scripts/AutoLaunch"
         state: directory
         mode: '0755'
 
     - name: Copy Catppuccin Frappé iTerm2 profile
-      template:
+      ansible.builtin.template:
         src: iterm2_profile.json.j2
         dest: "{{ ansible_env.HOME }}/Library/Application Support/iTerm2/DynamicProfiles/catppuccin_frappe.json"
         mode: '0644'
 
     - name: Create AutoLaunch script to change default profile
-      template:
+      ansible.builtin.template:
         src: set_default_profile.py.j2
         dest: "{{ ansible_env.HOME }}/Library/Application Support/iTerm2/Scripts/AutoLaunch/set_default_profile.py"
         mode: '0755'
@@ -42,20 +42,20 @@
         value: 1
 
     - name: Enable shell integration for Zsh
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: "{{ ansible_env.HOME }}/.zshrc"
         line: "source ~/.iterm2_shell_integration.zsh"
-        create: yes
+        create: true
+        mode: '0755'
 
     - name: Copy custom iTerm2 preferences file
-      template:
+      ansible.builtin.template:
         src: com.googlecode.iterm2.plist.j2
         dest: "{{ ansible_env.HOME }}/Library/Application Support/iTerm2/com.googlecode.iterm2.plist"
         mode: '0600'
 
     - name: Download iTerm2 shell integration script
-      get_url:
+      ansible.builtin.get_url:
         url: https://iterm2.com/shell_integration/zsh
         dest: "{{ ansible_env.HOME }}/.iterm2_shell_integration.zsh"
         mode: '0644'
-  become: false

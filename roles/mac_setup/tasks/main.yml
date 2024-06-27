@@ -1,13 +1,38 @@
 ---
-- import_tasks: sudo_setup.yml
-- import_tasks: homebrew.yml
-- import_tasks: zsh.yml
-- import_tasks: ssh.yml
-- import_tasks: vscode.yml
-- import_tasks: iterm2.yml
-- import_tasks: tmux.yml
-- import_tasks: vim.yml
-- import_tasks: git.yml
+- name: Import sudo setup tasks
+  ansible.builtin.import_tasks: sudo_setup.yml
+
+- name: Import homebrew tasks
+  ansible.builtin.import_tasks: homebrew.yml
+
+- name: Import zsh tasks
+  ansible.builtin.import_tasks: zsh.yml
+
+- name: Import ssh tasks
+  ansible.builtin.import_tasks: ssh.yml
+
+- name: Import vscode tasks
+  ansible.builtin.import_tasks: vscode.yml
+
+- name: Import iterm2 tasks
+  ansible.builtin.import_tasks: iterm2.yml
+
+- name: Import tmux tasks
+  ansible.builtin.import_tasks: tmux.yml
+
+- name: Import vim tasks
+  ansible.builtin.import_tasks: vim.yml
+
+- name: Import git tasks
+  ansible.builtin.import_tasks: git.yml
+
 # - import_tasks: gpg.yml
-- import_tasks: macos_preferences.yml
-- import_tasks: 1password.yml
+
+- name: Import macos preferences tasks
+  ansible.builtin.import_tasks: macos_preferences.yml
+
+- name: Import 1password tasks
+  ansible.builtin.import_tasks: 1password.yml
+
+- name: Import raycast tasks
+  ansible.builtin.import_tasks: raycast.yml

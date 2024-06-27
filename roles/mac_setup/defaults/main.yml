@@ -26,6 +26,7 @@ homebrew_packages:
   - vips
   - starship
   - ansible
+  - ansible-lint
   - terraform
   - awscli
   - kubectl
