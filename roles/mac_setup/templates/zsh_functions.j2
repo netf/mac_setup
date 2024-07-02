@@ -86,7 +86,7 @@ function ave() {
   [[ -z "$profile" ]] && return 1
 
   # Prompt for session duration
-  read -p "Enter session duration (default 1h): " duration
+  read "Enter session duration (default 1h): " duration
   duration=${duration:-1h}
 
   # Build command
@@ -147,6 +147,38 @@ function avd() {
       echo "Profile '$profile' has been deleted."
   else
     echo "No profile selected. Deletion cancelled."
+  fi
+}
+
+
+# Execute a command with AWS credentials but without starting a new session
+function avns() {
+  local profile cmd
+
+  # Check if aws-vault is installed
+  if ! command -v aws-vault &> /dev/null; then
+    echo "aws-vault could not be found. Please ensure it's installed and in your PATH."
+    return 1
+  fi
+
+  # Select profile interactively if not provided
+  if [[ -z "$1" ]]; then
+    profile=$(aws-vault list --profiles | fzf --prompt="Select AWS Profile: ")
+  else
+    profile="$1"
+    shift
+  fi
+
+  # Exit if no profile selected
+  [[ -z "$profile" ]] && return 1
+
+  # If additional arguments are provided, execute them
+  if [[ $# -gt 0 ]]; then
+    aws-vault exec --no-session "$profile" -- "$@"
+  else
+    # Otherwise, set the environment variables in the current shell
+    eval $(aws-vault exec --no-session "$profile" -- env | grep AWS | sed 's/^/export /')
+    echo "AWS environment variables for profile '$profile' have been set in the current shell."
   fi
 }
 
