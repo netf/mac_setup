@@ -34,6 +34,7 @@ homebrew_packages:
   - helm
   - docker
   - jq
+  - autojump
   - yq
   - tmux
   - fzf
