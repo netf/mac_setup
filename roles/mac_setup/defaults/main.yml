@@ -77,6 +77,12 @@ homebrew_cask_apps:
   - protonmail-bridge
   - spotify
   - skype
+  - signal
+  - telegram
+  - microsoft-teams
+  - zed
+  - postico
+  - tailscale
 
 vscode_extensions:
   - GitHub.copilot
